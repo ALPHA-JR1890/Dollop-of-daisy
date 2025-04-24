@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Galaxy Chat Room</title>
+  <style>
+    /* Galaxy background */
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: url('https://source.unsplash.com/1600x900/?galaxy,stars') no-repeat center center fixed;
+      background-size: cover;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    /* Chat container */
+    #chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 20px;
+    }
+
+    /* Chat messages */
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      margin-bottom: 10px;
+      padding: 10px;
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      border-radius: 10px;
+      backdrop-filter: blur(5px);
+      background: rgba(0, 0, 0, 0.5);
+    }
+
+    #messages .message {
+      margin-bottom: 10px;
+    }
+
+    #messages .username {
+      font-family: 'Indie Flower', cursive; /* "Monkey font" style */
+      font-size: 1.2em;
+      color: #FFD700; /* Golden usernames */
+    }
+
+    /* Input area */
+    #input-area {
+      display: flex;
+    }
+
+    #input-area input {
+      flex: 1;
+      padding: 10px;
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      border-radius: 5px;
+      margin-right: 10px;
+      background: rgba(0, 0, 0, 0.5);
+      color: white;
+    }
+
+    #input-area button {
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      background: #FFD700;
+      color: black;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #input-area button:hover {
+      background: #FFA500;
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="chat-container">
+    <div id="messages">
+      <!-- Chat messages will appear here -->
+    </div>
+    <div id="input-area">
+      <input type="text" id="chat-input" placeholder="Type your message here...">
+      <button id="send-button">Send</button>
+    </div>
+  </div>
+
+  <script>
+    const messagesContainer = document.getElementById('messages');
+    const inputField = document.getElementById('chat-input');
+    const sendButton = document.getElementById('send-button');
+
+    // Prompt the user to set their username
+    let username = '';
+    while (!username) {
+      username = prompt('Please enter your username:', 'MonkeyUser');
+      if (!username) {
+        alert('Username cannot be empty. Please enter a valid username.');
+      }
+    }
+
+    // Connect to the WebSocket server
+    const socket = new WebSocket('ws://localhost:3000');
+
+    // Add a message to the chat
+    function addMessage(username, text) {
+      const messageDiv = document.createElement('div');
+      messageDiv.classList.add('message');
+
+      const usernameSpan = document.createElement('span');
+      usernameSpan.classList.add('username');
+      usernameSpan.textContent = username + ': ';
+
+      const textSpan = document.createElement('span');
+      textSpan.textContent = text;
+
+      messageDiv.appendChild(usernameSpan);
+      messageDiv.appendChild(textSpan);
+      messagesContainer.appendChild(messageDiv);
+
+      // Scroll to the bottom
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    // Listen for messages from the server
+    socket.addEventListener('message', (event) => {
+      const { username, message } = JSON.parse(event.data);
+      addMessage(username, message);
+    });
+
+    // Send a message to the server
+    sendButton.addEventListener('click', () => {
+      const messageText = inputField.value.trim();
+      if (messageText) {
+        const data = JSON.stringify({ username, message: messageText });
+        socket.send(data);
+        inputField.value = '';
+      }
+    });
+
+    // Allow pressing "Enter" to send a message
+    inputField.addEventListener('keypress', (event) => {
+      if (event.key === 'Enter') {
+        sendButton.click();
+      }
+    });
+  </script>
+</body>
+</html>
